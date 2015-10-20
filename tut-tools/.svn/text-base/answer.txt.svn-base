@@ -1,0 +1,5 @@
+1 . ps -e --sort cmd
+2 . cat /usr/share/words | grep ^a.* |wc -l
+3 . ls -al *.conf* | sort -n -k 5
+4 . echo  helloworld >>helloworld.txt
+

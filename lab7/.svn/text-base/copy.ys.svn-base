@@ -1,0 +1,40 @@
+##copy.ys shijiahao 5130379072##
+
+init:        irmovl 0x100,%esp
+             irmovl 0x100,%ebp
+             irmovl $0x3,%eax
+             pushl %eax
+             irmovl dest,%eax
+             pushl %eax
+             irmovl src,%eax
+             pushl %eax
+             call copy_block
+             halt
+copy_block:  pushl %ebp
+             rrmovl %esp,%ebp
+             mrmovl 16(%ebp),%ebx
+             mrmovl 12(%ebp),%ecx
+             mrmovl 8(%ebp),%edx
+             irmovl 0,%eax
+loop:        andl %ebx,%ebx
+             je done
+             mrmovl (%edx),%edi
+             irmovl $0x4,%esi
+             addl %esi,%edx
+             rmmovl %edi,(%ecx)
+             addl %esi,%ecx
+             xorl %edi,%eax
+             irmovl $0x1,%esi
+             subl %esi,%ebx
+             jmp loop
+done:         rrmovl %ebp,%esp
+             popl %ebp
+
+             ret
+.align 4
+src:         .long 0x00a
+             .long 0x0b0
+             .long 0xc00
+dest:        .long 0x111
+             .long 0x222
+             .long 0x333

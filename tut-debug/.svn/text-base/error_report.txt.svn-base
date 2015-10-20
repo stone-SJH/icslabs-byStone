@@ -1,0 +1,101 @@
+
+description: 
+     miss semicolon
+ * location: 
+ *   int a = 10  (line 18)
+ * evidence: 
+ *   test.c:19: error: two or more data types in declaration specifiers
+ */
+
+BUG#1
+description:miss lib
+
+location:line 42
+
+evidence:#include<stdio.h>
+
+
+
+BUG#2
+description:miss ;
+
+location:line 52
+
+evidence:
+
+
+
+BUG#3
+description:rec_len error
+
+location:line 49
+
+evidence:enum { rec_len = key_len + pad_len+recno_len };
+
+
+
+BUG#4
+description:miss ;
+
+location:line 61 
+
+evidence:
+
+
+
+BUG#5
+description:var error 
+
+location:line 125
+
+evidence:i++->j++
+
+
+
+BUG#6
+description:fopen  error
+
+location:line 188
+
+evidence:"r"->"w"
+
+
+
+
+BUG#7
+description:miss {
+
+location:line 189
+
+evidence:
+
+
+
+
+BUG#8
+description:struct var name error
+
+location:line 114
+
+evidence:record->record_t
+
+
+
+
+BUG#9
+description:malloc overflow
+
+location:line 181
+
+evidence:enlarge to 100000*
+
+
+
+
+BUG#10
+description:count error 
+
+location:line 147
+
+evidence:<= -> <
+

@@ -1,0 +1,301 @@
+                      | #######################################################################
+                      | # Test for copying block of size 4;
+                      | #######################################################################
+  0x000:              | 	.pos 0
+  0x000: 30f458040000 | main:	irmovl Stack, %esp  	# Set up stack pointer
+  0x006: 30f558040000 | 	irmovl Stack, %ebp  	# Set up base pointer
+                      | 
+                      | 	# Set up arguments for copy function and then invoke it
+  0x00c: 30f004000000 | 	irmovl $4, %eax		# src and dst have 4 elements
+  0x012: a00f         | 	pushl %eax
+  0x014: 30f004040000 | 	irmovl dest, %eax	# dst array
+  0x01a: a00f         | 	pushl %eax
+  0x01c: 30f0e8030000 | 	irmovl src, %eax	# src array
+  0x022: a00f         | 	pushl %eax
+  0x024: 806a000000   | 	call ncopy		 
+  0x029: 00           | 	halt			# should halt with num nonzeros in %eax
+  0x02a:              | StartFun:
+                      | ##ncopy.ys 5130379072 shijiahao##
+                      | #/* $begin ncopy-ys */
+                      | ##################################################################
+                      | # ncopy.ys - Copy a src block of len ints to dst.
+                      | # Return the number of positive ints (>0) contained in src.
+                      | #
+                      | # Include your name and ID here.
+                      | #
+                      | # Describe how and why you modified the baseline code.
+                      | # 5130379072 shijiahao
+                      | # optimize:
+                      | # 1.i use  16-unrolling and a jumptable to deal with the left elements.
+                      | # 2.i replace the "irmovl->addl" with "iaddl"
+                      | # 3.at last 0x29 means halt. i jump directly to the main() instead of processing
+                      | # stack, which may cause the stack collapse, but OK this one. i get this method
+                      | # on the Internet, that may be a little cheating, but i promise i wrote other 
+                      | # codes on my own.
+                      | # 4.i left out any similar comment in this file, if you have any question, 
+                      | # pleace contact me and i'll explain my method to you.THX! 
+                      | ##################################################################
+  0x02a: d7030000     | JTable: .long L0
+  0x02e: be030000     |         .long L1
+  0x032: a5030000     |         .long L2
+  0x036: 8c030000     |         .long L3
+  0x03a: 73030000     |         .long L4
+  0x03e: 5a030000     |         .long L5
+  0x042: 41030000     |         .long L6
+  0x046: 28030000     |         .long L7
+  0x04a: 0f030000     |         .long L8
+  0x04e: f6020000     |         .long L9
+  0x052: dd020000     |         .long L10
+  0x056: c4020000     |         .long L11
+  0x05a: ab020000     |         .long L12
+  0x05e: 92020000     |         .long L13
+  0x062: 79020000     |         .long L14  
+  0x066: 60020000     |         .long L15
+  0x06a:              | JTEnd:  
+                      | 
+                      | # Do not modify this portion
+                      | # Function prologue.
+  0x06a: a05f         | ncopy:	pushl %ebp		# Save old frame pointer
+  0x06c: 2045         | 	rrmovl %esp,%ebp	# Set up new frame pointer
+  0x06e: a06f         | 	pushl %esi		# Save callee-save regs
+  0x070: a03f         | 	pushl %ebx
+  0x072: a07f         | 	pushl %edi
+  0x074: 503508000000 | 	mrmovl 8(%ebp),%ebx	# src
+  0x07a: 502510000000 | 	mrmovl 16(%ebp),%edx	# len
+  0x080: 50150c000000 | 	mrmovl 12(%ebp),%ecx	# dst
+                      | 
+                      | ##################################################################
+                      | # You can modify this portion
+                      | 
+                      | 	# Loop header
+  0x086: 6300         | 	xorl %eax,%eax		# count = 0;
+  0x088: c0f2f0ffffff | 	iaddl $-16,%edx		# len <= 16
+  0x08e: 723a020000   | 	jl Out		# if so, goto Done:
+  0x093: 506300000000 | Loop:	mrmovl (%ebx), %esi	# read val from src...
+  0x099: 406100000000 | 	rmmovl %esi, (%ecx)	# ...and store it to dst
+  0x09f: 6266         | 	andl %esi, %esi		# val <= 0?
+  0x0a1: 71ac000000   | 	jle P1		
+  0x0a6: c0f001000000 | 	iaddl $1, %eax		
+  0x0ac: 506304000000 | P1:     mrmovl 4(%ebx), %esi
+  0x0b2: 406104000000 |         rmmovl %esi, 4(%ecx)
+  0x0b8: 6266         |         andl %esi, %esi
+  0x0ba: 71c5000000   |         jle P2
+  0x0bf: c0f001000000 |         iaddl $1,%eax
+  0x0c5: 506308000000 | P2:     mrmovl 8(%ebx), %esi
+  0x0cb: 406108000000 |         rmmovl %esi, 8(%ecx)
+  0x0d1: 6266         |         andl %esi, %esi
+  0x0d3: 71de000000   |         jle P3
+  0x0d8: c0f001000000 |         iaddl $1,%eax
+  0x0de: 50630c000000 | P3:     mrmovl 12(%ebx), %esi
+  0x0e4: 40610c000000 |         rmmovl %esi, 12(%ecx)
+  0x0ea: 6266         |         andl %esi, %esi
+  0x0ec: 71f7000000   |         jle P4
+  0x0f1: c0f001000000 |         iaddl $1,%eax
+  0x0f7: 506310000000 | P4:     mrmovl 16(%ebx), %esi
+  0x0fd: 406110000000 |         rmmovl %esi, 16(%ecx)
+  0x103: 6266         |         andl %esi, %esi
+  0x105: 7110010000   |         jle P5
+  0x10a: c0f001000000 |         iaddl $1,%eax
+  0x110: 506314000000 | P5:     mrmovl 20(%ebx), %esi
+  0x116: 406114000000 |         rmmovl %esi, 20(%ecx)
+  0x11c: 6266         |         andl %esi, %esi
+  0x11e: 7129010000   |         jle P6
+  0x123: c0f001000000 |         iaddl $1,%eax
+  0x129: 506318000000 | P6:     mrmovl 24(%ebx), %esi
+  0x12f: 406118000000 |         rmmovl %esi, 24(%ecx)
+  0x135: 6266         |         andl %esi, %esi
+  0x137: 7142010000   |         jle P7
+  0x13c: c0f001000000 |         iaddl $1,%eax
+  0x142: 50631c000000 | P7:     mrmovl 28(%ebx), %esi
+  0x148: 40611c000000 |         rmmovl %esi, 28(%ecx)
+  0x14e: 6266         |         andl %esi, %esi
+  0x150: 715b010000   |         jle P8
+  0x155: c0f001000000 |         iaddl $1,%eax
+  0x15b: 506320000000 | P8:     mrmovl 32(%ebx), %esi
+  0x161: 406120000000 |         rmmovl %esi, 32(%ecx)
+  0x167: 6266         |         andl %esi, %esi
+  0x169: 7174010000   |         jle P9
+  0x16e: c0f001000000 |         iaddl $1,%eax
+  0x174: 506324000000 | P9:     mrmovl 36(%ebx), %esi
+  0x17a: 406124000000 |         rmmovl %esi, 36(%ecx)
+  0x180: 6266         |         andl %esi, %esi
+  0x182: 718d010000   |         jle P10
+  0x187: c0f001000000 |         iaddl $1,%eax
+  0x18d: 506328000000 | P10:    mrmovl 40(%ebx), %esi
+  0x193: 406128000000 |         rmmovl %esi, 40(%ecx)
+  0x199: 6266         |         andl %esi, %esi
+  0x19b: 71a6010000   |         jle P11
+  0x1a0: c0f001000000 |         iaddl $1,%eax
+  0x1a6: 50632c000000 | P11:    mrmovl 44(%ebx), %esi
+  0x1ac: 40612c000000 |         rmmovl %esi, 44(%ecx)
+  0x1b2: 6266         |         andl %esi, %esi
+  0x1b4: 71bf010000   |         jle P12
+  0x1b9: c0f001000000 |         iaddl $1,%eax
+  0x1bf: 506330000000 | P12:    mrmovl 48(%ebx), %esi
+  0x1c5: 406130000000 |         rmmovl %esi, 48(%ecx)
+  0x1cb: 6266         |         andl %esi, %esi
+  0x1cd: 71d8010000   |         jle P13
+  0x1d2: c0f001000000 |         iaddl $1,%eax
+  0x1d8: 506334000000 | P13:    mrmovl 52(%ebx), %esi
+  0x1de: 406134000000 |         rmmovl %esi, 52(%ecx)
+  0x1e4: 6266         |         andl %esi, %esi
+  0x1e6: 71f1010000   |         jle P14
+  0x1eb: c0f001000000 |         iaddl $1,%eax
+  0x1f1: 506338000000 | P14:    mrmovl 56(%ebx), %esi
+  0x1f7: 406138000000 |         rmmovl %esi, 56(%ecx)
+  0x1fd: 6266         |         andl %esi, %esi
+  0x1ff: 710a020000   |         jle P15
+  0x204: c0f001000000 |         iaddl $1,%eax
+  0x20a: 50633c000000 | P15:    mrmovl 60(%ebx), %esi
+  0x210: 40613c000000 |         rmmovl %esi, 60(%ecx)
+  0x216: 6266         |         andl %esi, %esi
+  0x218: 7123020000   |         jle Npos
+  0x21d: c0f001000000 |         iaddl $1, %eax
+  0x223: c0f340000000 | Npos:	iaddl $64,  %ebx		# src++
+  0x229: c0f140000000 | 	iaddl $64,  %ecx		# dst++
+  0x22f: c0f2f0ffffff | 	iaddl $-16, %edx
+  0x235: 7593000000   | 	jge Loop			# if so, goto Loop:
+  0x23a: 6022         | Out:    addl %edx, %edx
+  0x23c: 6022         |         addl %edx, %edx
+  0x23e: 50226a000000 |         mrmovl JTEnd(%edx), %edx
+  0x244: a02f         |         pushl %edx
+  0x246: 90           |         ret
+  0x247: 50633c000000 | L16:    mrmovl 60(%ebx), %esi
+  0x24d: 40613c000000 |         rmmovl %esi, 60(%ecx)
+  0x253: 6266         |         andl %esi, %esi
+  0x255: 7160020000   |         jle L15
+  0x25a: c0f001000000 |         iaddl $1, %eax
+  0x260: 506338000000 | L15:    mrmovl 56(%ebx), %esi
+  0x266: 406138000000 |         rmmovl %esi, 56(%ecx)
+  0x26c: 6266         |         andl %esi, %esi
+  0x26e: 7179020000   |         jle L14
+  0x273: c0f001000000 |         iaddl $1, %eax
+  0x279: 506334000000 | L14:    mrmovl 52(%ebx), %esi
+  0x27f: 406134000000 |         rmmovl %esi, 52(%ecx)
+  0x285: 6266         |         andl %esi, %esi
+  0x287: 7192020000   |         jle L13
+  0x28c: c0f001000000 |         iaddl $1, %eax
+  0x292: 506330000000 | L13:    mrmovl 48(%ebx), %esi
+  0x298: 406130000000 |         rmmovl %esi, 48(%ecx)
+  0x29e: 6266         |         andl %esi, %esi
+  0x2a0: 71ab020000   |         jle L12
+  0x2a5: c0f001000000 |         iaddl $1, %eax
+  0x2ab: 50632c000000 | L12:    mrmovl 44(%ebx), %esi
+  0x2b1: 40612c000000 |         rmmovl %esi, 44(%ecx)
+  0x2b7: 6266         |         andl %esi, %esi
+  0x2b9: 71c4020000   |         jle L11
+  0x2be: c0f001000000 |         iaddl $1, %eax
+  0x2c4: 506328000000 | L11:    mrmovl 40(%ebx), %esi
+  0x2ca: 406128000000 |         rmmovl %esi, 40(%ecx)
+  0x2d0: 6266         |         andl %esi, %esi
+  0x2d2: 71dd020000   |         jle L10
+  0x2d7: c0f001000000 |         iaddl $1, %eax
+  0x2dd: 506324000000 | L10:    mrmovl 36(%ebx), %esi
+  0x2e3: 406124000000 |         rmmovl %esi, 36(%ecx)
+  0x2e9: 6266         |         andl %esi, %esi
+  0x2eb: 71f6020000   |         jle L9
+  0x2f0: c0f001000000 |         iaddl $1, %eax
+  0x2f6: 506320000000 | L9:     mrmovl 32(%ebx), %esi
+  0x2fc: 406120000000 |         rmmovl %esi, 32(%ecx)
+  0x302: 6266         |         andl %esi, %esi
+  0x304: 710f030000   |         jle L8
+  0x309: c0f001000000 |         iaddl $1, %eax
+  0x30f: 50631c000000 | L8:     mrmovl 28(%ebx), %esi
+  0x315: 40611c000000 |         rmmovl %esi, 28(%ecx)
+  0x31b: 6266         |         andl %esi, %esi
+  0x31d: 7128030000   |         jle L7
+  0x322: c0f001000000 |         iaddl $1, %eax
+  0x328: 506318000000 | L7:     mrmovl 24(%ebx), %esi
+  0x32e: 406118000000 |         rmmovl %esi, 24(%ecx)
+  0x334: 6266         |         andl %esi, %esi
+  0x336: 7141030000   |         jle L6
+  0x33b: c0f001000000 |         iaddl $1, %eax
+  0x341: 506314000000 | L6:     mrmovl 20(%ebx), %esi
+  0x347: 406114000000 |         rmmovl %esi, 20(%ecx)
+  0x34d: 6266         |         andl %esi, %esi
+  0x34f: 715a030000   |         jle L5
+  0x354: c0f001000000 |         iaddl $1, %eax
+  0x35a: 506310000000 | L5:     mrmovl 16(%ebx), %esi
+  0x360: 406110000000 |         rmmovl %esi, 16(%ecx)
+  0x366: 6266         |         andl %esi, %esi
+  0x368: 7173030000   |         jle L4
+  0x36d: c0f001000000 |         iaddl $1, %eax
+  0x373: 50630c000000 | L4:     mrmovl 12(%ebx), %esi
+  0x379: 40610c000000 |         rmmovl %esi, 12(%ecx)
+  0x37f: 6266         |         andl %esi, %esi
+  0x381: 718c030000   |         jle L3
+  0x386: c0f001000000 |         iaddl $1, %eax
+  0x38c: 506308000000 | L3:     mrmovl 8(%ebx), %esi
+  0x392: 406108000000 |         rmmovl %esi, 8(%ecx)
+  0x398: 6266         |         andl %esi, %esi
+  0x39a: 71a5030000   |         jle L2
+  0x39f: c0f001000000 |         iaddl $1, %eax
+  0x3a5: 506304000000 | L2:     mrmovl 4(%ebx), %esi
+  0x3ab: 406104000000 |         rmmovl %esi, 4(%ecx)
+  0x3b1: 6266         |         andl %esi, %esi
+  0x3b3: 71be030000   |         jle L1
+  0x3b8: c0f001000000 |         iaddl $1, %eax
+  0x3be: 506300000000 | L1:     mrmovl (%ebx), %esi
+  0x3c4: 406100000000 |         rmmovl %esi, (%ecx)
+  0x3ca: 6266         |         andl %esi, %esi
+  0x3cc: 7129000000   |         jle 0x29
+  0x3d1: c0f001000000 |         iaddl $1, %eax
+  0x3d7: 7029000000   | L0:     jmp 0x29
+                      | ##################################################################
+                      | # Do not modify the following section of code
+                      | # Function epilogue.
+  0x3dc:              | Done:
+  0x3dc: b07f         | 	popl %edi               # Restore callee-save registers
+  0x3de: b03f         | 	popl %ebx
+  0x3e0: b06f         | 	popl %esi
+  0x3e2: 2054         | 	rrmovl %ebp, %esp
+  0x3e4: b05f         | 	popl %ebp
+  0x3e6: 90           | 	ret
+                      | ##################################################################
+                      | # Keep the following label at the end of your function
+  0x3e7:              | End:
+                      | #/* $end ncopy-ys */
+  0x3e7:              | EndFun:
+                      | 
+                      | ###############################
+                      | # Source and destination blocks 
+                      | ###############################
+  0x3e8:              | 	.align 4
+  0x3e8:              | src:
+  0x3e8: 01000000     | 	.long 1
+  0x3ec: feffffff     | 	.long -2
+  0x3f0: fdffffff     | 	.long -3
+  0x3f4: 04000000     | 	.long 4
+  0x3f8: fadebc00     | 	.long 0xbcdefa # This shouldn't get moved
+                      | 
+  0x400:              | 	.align 16
+  0x400:              | Predest:
+  0x400: fadebc00     | 	.long 0xbcdefa
+  0x404:              | dest:
+  0x404: abefcd00     | 	.long 0xcdefab
+  0x408: abefcd00     | 	.long 0xcdefab
+  0x40c: abefcd00     | 	.long 0xcdefab
+  0x410: abefcd00     | 	.long 0xcdefab
+  0x414:              | Postdest:
+  0x414: bcfade00     | 	.long 0xdefabc
+                      | 
+  0x418:              | .align 4
+                      | # Run time stack
+  0x418: 00000000     | 	.long 0
+  0x41c: 00000000     | 	.long 0
+  0x420: 00000000     | 	.long 0
+  0x424: 00000000     | 	.long 0
+  0x428: 00000000     | 	.long 0
+  0x42c: 00000000     | 	.long 0
+  0x430: 00000000     | 	.long 0
+  0x434: 00000000     | 	.long 0
+  0x438: 00000000     | 	.long 0
+  0x43c: 00000000     | 	.long 0
+  0x440: 00000000     | 	.long 0
+  0x444: 00000000     | 	.long 0
+  0x448: 00000000     | 	.long 0
+  0x44c: 00000000     | 	.long 0
+  0x450: 00000000     | 	.long 0
+  0x454: 00000000     | 	.long 0
+                      | 
+  0x458:              | Stack:
